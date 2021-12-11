@@ -508,3 +508,61 @@ Setelah itu uji dengan cara ping ke Doriki dari Elena dan Fukurou pada tanggal y
 Karena kita memiliki 2 Web Server, Luffy ingin Guanhao disetting sehingga setiap request dari client yang mengakses DNS Server akan didistribusikan secara bergantian pada Jorge dan Maingate.
 
 **Pembahasan:**
+
+Sebelum melakukan firewall, jadikan Maingate dan Jorge Web server dengan membuat Domain di Doriki.
+
+1. Atur konfigurasi pada file `named.conf.local` pada directory `/etc/bind/named.conf.local` dan tambahkan :
+```
+zone "Praktikum.E08.com" {
+     type master;
+     file "/etc/bind/Praktikum.E08.com";
+};
+
+zone "Praktikum.terakhir.com" {
+     type master;
+     file "/etc/bind/Praktikum.terakhir.com";
+};   
+```
+
+2. Setelah itu copy file `db.local` dan buat file sesuai dengan DNS yang dibuat dengan command `cp /etc/bind/db.local /etc/bind/Praktikum.E08.com` dan `cp /etc/bind/db.local /etc/bind/Praktikum.terakhir.com` karena membuat 2 Domain, dan edit isi file yang telah dibuat :
+
+**Praktikum.E08.com [IP mengarah ke Jorge]**
+
+![6e](./images/6e.JPG)
+
+**Praktikum.terakhir.com [IP mengarah ke Maingate]**
+
+![6f](./images/6f.JPG)
+
+Setelah itu restart service dns dengan menggunakan command `service bind9 restart`.
+
+Pada node guanhao jalankan script sebagai berikut : 
+
+```
+iptables -A PREROUTING -t nat -p tcp -d 10.33.0.17 --dport 80 -m statistic --mode nth --every 2 --packet 0 -j DNAT --to-destination 10.33.0.18:80
+iptables -A PREROUTING -t nat -p tcp -d 10.33.0.17 --dport 80 -j DNAT --to-destination 10.33.0.19:80
+iptables -t nat -A POSTROUTING -p tcp -d 10.33.0.18 --dport 80 -j SNAT --to-source 10.33.0.17
+iptables -t nat -A POSTROUTING -p tcp -d 10.33.0.19 --dport 80 -j SNAT --to-source 10.33.0.17
+```
+
+Untuk melakukan testing pada script tersebut :
+
+1. Pada node Elena, Guanhao, Maingate, dan Jorge install netcat dengan command : `apt-get install netcat -y`
+2. Pada node Maingate dan Jorge gunakan command : `nc -l -p 80`
+3. Pada node Elena gunakan command : `nc [IP Maingate/Jorge] 80` misal `nc 10.33.0.19 80`
+4. Ketikkan apapun di node Elena, jika apa yang diketik sama persis yang ditampilkan di node Webserver maka script berhasil
+5. Hasil :
+   
+   **Elena dengan Maingate**
+   
+   ![6a](./images/6a.JPG)
+   
+   ![6b](./images/6b.JPG)
+   
+   **Elena dengan Jorge**
+   
+   ![6c](./images/6c.JPG)
+   
+   ![6d](./images/6d.JPG)
+   
+ 
