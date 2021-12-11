@@ -24,14 +24,77 @@ Keterangan:
       apt-get install bind9 -y
       ```
 
-    2. ...
+    2. Ubah konfigurasi pada file `/etc/bind/named.conf.options` dengan uncomment forwarders dan mengubah IPnya dan tambahkan `allow-query{any;};` di isi file tersebut, isi file sebagai berikut :
+        ```
+        options {
+            directory "/var/cache/bind";
 
+        //  If there is a firewall between you and nameservers you want
+        //  to talk to, you may need to fix the firewall to allow multiple
+        //  ports to talk.  See http://www.kb.cert.org/vuls/id/800113
+
+        //  If your ISP provided one or more IP addresses for stable
+        //  nameservers, you probably want to use them as forwarders.
+        //  Uncomment the following block, and insert the addresses replacing
+        //  the all-0's placeholder.
+
+            forwarders {
+                192.168.122.1;
+            };
+            allow-query{any;};
+
+        //=====================================================================$
+        //  If BIND logs error messages about the root key being expired,
+        //  you will need to update your keys.  See https://www.isc.org/bind-keys
+        //=====================================================================$
+        //  dnssec-validation auto;
+
+            auth-nxdomain no;    # conform to RFC1035
+            listen-on-v6 { any; };
+        };
+        ```
+        
+        Setelah itu restart service dns dengan menggunakan command `service bind9 restart`.
+        
 - Jipangu adalah DHCP Server
 
     Untuk menjadikan Jipangu sebagai DHCP Server:
 
-    1. 
+    1. Install DHCP
+      
+      
+        ```
+        apt-get update
+        apt-get install isc-dhcp-server -y
+        ```
+      
+      
+    2. Ubah konfigurasi pada file `isc-dhcp-server` pada directory `/etc/default/isc-dhcp-server` dan tambahkan `eth0` di bagian `INTERFACES=`, isi file sebagai berikut :
+        ```
+         Defaults for isc-dhcp-server initscript
+        # sourced by /etc/init.d/isc-dhcp-server
+        # installed at /etc/default/isc-dhcp-server by the maintainer scripts
 
+        #
+        # This is a POSIX shell fragment
+        #
+
+        # Path to dhcpd's config file (default: /etc/dhcp/dhcpd.conf).
+        #DHCPD_CONF=/etc/dhcp/dhcpd.conf
+
+        # Path to dhcpd's PID file (default: /var/run/dhcpd.pid).
+        #DHCPD_PID=/var/run/dhcpd.pid
+
+        # Additional options to start dhcpd with.
+        #       Don't use options -cf or -pf here; use DHCPD_CONF/ DHCPD_PID instead
+        #OPTIONS=""
+
+        # On what interfaces should the DHCP server (dhcpd) serve DHCP requests?       
+        #       Separate multiple interfaces with spaces, e.g. "eth0 eth1".
+        INTERFACES="eth0"
+        ```
+        Setelah itu restart service dhcp dengan menggunakan command `service isc-dhcp-server restart`.
+        
 - Maingate dan Jorge adalah Web Server
 - Jumlah Host pada Blueno adalah 100 host
 - Jumlah Host pada Cipher adalah 700 host
@@ -44,11 +107,27 @@ Karena kalian telah belajar subnetting dan routing, Luffy ingin meminta kalian u
 
 Pada praktikum kali ini digunakan metode subnetting VLSM. Pembagian subnet ada pada gambar di bawah:
 
-![subnet](./images/subnet.png)
+![VLSM](./images/VLSM.jpg)
+
+| Subnet  | Jumlah IP | Netmask  |
+| ------------- | ------------- | ------------- | 	       
+| A1  | 3  | /29 |
+| A2  | 101  | /25 |
+| A3  | 701  | /22 |
+| A4  | 2  | /30 |
+| A5  | 2  | /30 |
+| A6  | 301  | /23 |
+| A7  | 201  | /24 |
+| A8  | 3  | /29 |
+| **Total**  | **1314**  | **/21** |
 
 Kemudian dilakukan perhitungan dengan tree untuk mendapatkan NID masing-masing subnet:
 
-![tree](./images/tree.png)
+![tree](./images/tree.jpg)
+
+Hasil Perhitungan : 
+
+![subnet](./images/subnet.jpg)
 
 ## **C. Routing**
 
