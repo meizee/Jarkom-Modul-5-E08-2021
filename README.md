@@ -129,14 +129,223 @@ Hasil Perhitungan :
 
 ![subnet](./images/subnet.jpg)
 
+Untuk melakukan static subnetting hanya dilakukan untuk Router, DNS Server, DHCP Server, dan Web Server. Dikarenakan semua host akan diberi IP oleh DHCP server.
+
+Untuk masing-masing network configuration sebagai berikut :
+
+**Foosha**
+
+```
+ auto eth0
+ iface eth0 inet dhcp
+
+auto eth1
+iface eth1 inet static
+	address 10.33.0.1
+	netmask 255.255.255.252
+
+auto eth2
+iface eth2 inet static
+	address 10.33.0.5
+	netmask 255.255.255.252
+
+```
+
+**Water7**
+
+```
+auto eth0
+iface eth0 inet static
+	address 10.33.0.2
+	netmask 255.255.255.252
+
+auto eth1
+iface eth1 inet static
+	address 10.33.0.129
+	netmask 255.255.255.128
+
+auto eth2
+iface eth2 inet static
+	address 10.33.4.1
+	netmask 255.255.252.0
+
+auto eth3
+iface eth3 inet static
+	address 10.33.0.9
+	netmask 255.255.255.248
+```
+
+**Guanhao**
+
+```
+auto eth0
+iface eth0 inet static
+	address 10.33.0.6
+	netmask 255.255.255.252
+
+auto eth1
+iface eth1 inet static
+	address 10.33.2.1
+	netmask 255.255.254.0
+
+auto eth2
+iface eth2 inet static
+	address 10.33.1.1
+	netmask 255.255.255.0
+
+auto eth3
+iface eth3 inet static
+	address 10.33.0.17
+	netmask 255.255.255.248
+
+```
+
+**Doriki**
+
+```
+auto eth0
+iface eth0 inet static
+	address 10.33.0.10
+	netmask 255.255.255.248
+	gateway 10.33.0.9
+```
+
+**Jipangu**
+
+```
+auto eth0
+iface eth0 inet static
+	address 10.33.0.11
+	netmask 255.255.255.248
+	gateway 10.33.0.9
+```
+
+**Jorge**
+
+```
+auto eth0
+iface eth0 inet static
+	address 10.33.0.18
+	netmask 255.255.255.248
+	gateway 10.33.0.17
+```
+
+**Maingate**
+
+```
+auto eth0
+iface eth0 inet static
+	address 10.33.0.19
+	netmask 255.255.255.248
+	gateway 10.33.0.17
+```
+
 ## **C. Routing**
 
 Kalian juga diharuskan melakukan Routing agar setiap perangkat pada jaringan tersebut dapat terhubung.
+
+Routing dilakukan pada Foosha, Water7, dan Guanhao. Foosha akan melakukan routing pada seluruh subnet yang belum terhubung ke Foosha. Untuk Water7 dan Guanhao hanya perlu melakukan default routing.
+
+**Foosha** :
+
+```
+##DORIKI n JIPANGU
+route add -net 10.33.0.8 netmask 255.255.255.248 gw 10.33.0.2
+##BLUENO
+route add -net 10.33.0.128 netmask 255.255.255.128 gw 10.33.0.2
+##CIPHER
+route add -net 10.33.4.0 netmask 255.255.252.0 gw 10.33.0.2
+##JORGE n MAINGATE
+route add -net 10.33.0.16 netmask 255.255.255.248 gw 10.33.0.6
+##ELENA
+route add -net 10.33.2.0 netmask 255.255.254.0 gw 10.33.0.6
+##FUKUROU
+route add -net 10.33.1.0 netmask 255.255.255.0 gw 10.33.0.6
+```
+
+**Water7** :
+
+```
+route add -net 0.0.0.0 netmask 0.0.0.0 gw 10.33.0.1
+```
+
+**Guanhao** :
+
+```
+route add -net 0.0.0.0 netmask 0.0.0.0 gw 10.33.0.5
+```
 
 ## **D. DHCP Server dan DHCP Relay**
 
 Tugas berikutnya adalah memberikan ip pada subnet Blueno, Cipher, Fukurou, dan Elena secara dinamis menggunakan bantuan DHCP server. Kemudian kalian ingat bahwa kalian harus setting DHCP Relay pada router yang menghubungkannya.
 
+Untuk memberikan ip kepada subnet Blueno, Cipher, Fukurou, dan Elena secara dinamis, di Jipangu buka file `dhcpd.conf` pada directory `/etc/dhcp/` dan tambahkan konfigurasi sebagai berikut : 
+
+```
+subnet 10.33.0.128 netmask 255.255.255.128 {
+    range 10.33.0.130 10.33.0.255;
+    option routers 10.33.0.129;
+    option broadcast-address 10.33.0.255;
+    option domain-name-servers 10.33.0.10;
+    default-lease-time 360;
+    max-lease-time 720;
+}
+
+subnet 10.33.0.8 netmask 255.255.255.248 {
+}
+
+subnet 10.33.4.0 netmask 255.255.252.0 {
+    range 10.33.4.2 10.33.4.255;
+    option routers 10.33.4.1;
+    option broadcast-address 10.33.7.255;
+    option domain-name-servers 10.33.0.10;
+    default-lease-time 360;
+    max-lease-time 720;
+}
+subnet 10.33.2.0 netmask 255.255.254.0 {
+    range 10.33.2.2 10.33.2.255;
+    option routers 10.33.2.1;
+    option broadcast-address 10.33.3.255;
+    option domain-name-servers 10.33.0.10;
+    default-lease-time 360;
+    max-lease-time 720;
+}
+
+subnet 10.33.1.0 netmask 255.255.255.0 {
+    range 10.33.1.2 10.33.1.255;
+    option routers 10.33.1.1;
+    option broadcast-address 10.33.1.255;
+    option domain-name-servers 10.33.0.10;
+    default-lease-time 360;
+    max-lease-time 720;
+}
+```
+
+Setelah itu restart service dhcp dengan menggunakan command `service isc-dhcp-server restart`.
+
+Dhcp relay dilakukan di Water7, Foosha, dan Guanhao.
+
+1. Install DHCP relay
+   ```
+   apt-get update
+   apt-get install isc-dhcp-relay -y
+   ```
+2. Ubah konfigurasi pada file `isc-dhcp-relay` pada directory `/etc/default/` dan ubah pada bagian `SERVERS=` mengarah ke IP DHCP server dan `INTERFACES=` sesuai dengan router masing-masing.
+   
+   **Water7**
+   
+   ![relay1](./images/relay1.JPG)
+
+   **Foosha**
+   
+   ![relay2](./images/relay2.JPG)
+   
+   **Guanhao**
+   
+   ![relay3](./images/relay3.JPG)
+   
+   Setelah selesai restart DHCP relay dengan command `service isc-dhcp-relay restart`.
+   
 ## **Soal 1**
 
 Agar topologi yang kalian buat dapat mengakses keluar, kalian diminta untuk mengkonfigurasi Foosha menggunakan iptables, tetapi Luffy tidak ingin menggunakan MASQUERADE.
