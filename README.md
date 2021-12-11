@@ -352,10 +352,46 @@ Agar topologi yang kalian buat dapat mengakses keluar, kalian diminta untuk meng
 
 **Pembahasan:**
 
+Karena diminta tidak menggunakan `MASQUERADE` maka kita akan ganti dengan `SNAT`. Pada node Foosha jalankan script berikut
+
+```
+ip a
+(check ip foosha eth 0)
+```
+![image](https://user-images.githubusercontent.com/81347366/145677785-9e4f87af-1514-446f-9a52-335a7cf5178e.png)
+
+```
+iptables -t nat -A POSTROUTING -s 10.33.0.0/21 -o eth0 -j SNAT --to-source [IP Foosha eth0]
+```
+maka jika di cek di chain postrouting akan menjadi seperti ini
+![image](https://user-images.githubusercontent.com/81347366/145677717-db7b4067-ed71-4b7b-b3c2-68d49d9003da.png)
+
+Setelah itu maka semua client akan dapat mengakses keluar tanpa konfigurasi `MASQUERADE`
+![image](https://user-images.githubusercontent.com/81347366/145677848-4449daed-979a-429c-84e3-87d4f0f51601.png)
+
+
 ## **Soal 2**
 Kalian diminta untuk mendrop semua akses HTTP dari luar Topologi kalian pada server yang merupakan DHCP Server dan DNS Server demi menjaga keamanan.
 
 **Pembahasan:**
+
+Pada Node Jipangu dan Doriki Jalankan script :
+```iptables -A FORWARD -d 10.33.0.8/29 -i eth0 -p tcp --dport 80 -j DROP```
+
+Kemudian untuk melakukan Checking Jalankan Script Berikut :
+
+**Jipangu/Doriki**
+```
+apt-get install netcat -y
+```
+```
+nc -l -p 80
+```
+
+**Foosha**
+`nmap -p [IP Doriki/Jipangu] atau nmap -p 10.33.0.8/29` 
+
+![image](https://user-images.githubusercontent.com/81347366/145678998-2fc8c22d-c385-44c5-bd93-0662c6c0477f.png)
 
 ## **Soal 3**
 Karena kelompok kalian maksimal terdiri dari 3 orang. Luffy meminta kalian untuk membatasi DHCP dan DNS Server hanya boleh menerima maksimal 3 koneksi ICMP secara bersamaan menggunakan iptables, selebihnya didrop.
